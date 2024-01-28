@@ -13,6 +13,10 @@ public class PlayerController : NetworkBehaviour
         {
             Move();
         }
+        else
+        {
+            Destroy(this);
+        }
     }
 
     // Start is called before the first frame update
