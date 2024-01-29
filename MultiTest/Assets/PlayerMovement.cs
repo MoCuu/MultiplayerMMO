@@ -1,9 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Netcode;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovement : NetworkBehaviour
 {
+    public NetworkVariable<Vector3> Position = new NetworkVariable<Vector3>();
+
     [Header("Movement")]
     public float moveSpeed;
 
@@ -31,6 +34,18 @@ public class PlayerMovement : MonoBehaviour
 
     Rigidbody rb;
 
+    public override void OnNetworkSpawn()
+    {
+        if (IsOwner)
+        {
+            MovePlayer();
+        }
+        else
+        {
+            Destroy(this);
+        }
+    }
+
     private void Start()
     {
         readyToJump = true;
@@ -51,11 +66,14 @@ public class PlayerMovement : MonoBehaviour
             rb.drag = groundDrag;
         else
             rb.drag = 0;
+
+        transform.position = Position.Value;
     }
 
     private void FixedUpdate()
     {
         MovePlayer();
+        transform.position = Position.Value;
     }
 
     private void MyInput()
@@ -76,16 +94,19 @@ public class PlayerMovement : MonoBehaviour
 
     private void MovePlayer()
     {
-        // calculate movement direction
-        moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
+        if (NetworkManager.Singleton.IsServer)
+        {
+            // calculate movement direction
+            moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
 
-        // on ground
-        if (grounded)
-            rb.AddForce(moveDirection.normalized * moveSpeed * 10f, ForceMode.Force);
+            // on ground
+            if (grounded)
+                rb.AddForce(moveDirection.normalized * moveSpeed * 10f, ForceMode.Force);
 
-        // in air
-        else if (!grounded)
-            rb.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);
+            // in air
+            else if (!grounded)
+                rb.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);
+        }
     }
 
     private void SpeedControl()
