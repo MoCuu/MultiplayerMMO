@@ -16,7 +16,6 @@ public class GameManager : MonoBehaviour
         else
         {
             StatusLabels();
-            //SubmitNewPosition();
         }
         GUILayout.EndArea();
     }
@@ -35,22 +34,6 @@ public class GameManager : MonoBehaviour
         GUILayout.Label("Transport: " + NetworkManager.Singleton.NetworkConfig.NetworkTransport.GetType().Name); // Poka¿e w jaki sposób po³¹czony jest klient i serwer
         GUILayout.Label("Mode: " + mode);
     }
-
-    //static void SubmitNewPosition()
-    //{
-    //    string label;
-    //    if (NetworkManager.Singleton.IsServer)
-    //        label = "Move";
-    //    else
-    //        label = "New position request";
-
-    //    if(GUILayout.Button(label))
-    //    {
-    //        var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject(); // Zwraca objekt gracza
-    //        var player = playerObject.GetComponent<PlayerController>();
-    //        player.Move();
-    //    }
-    //}
 
     // Start is called before the first frame update
     void Start()
