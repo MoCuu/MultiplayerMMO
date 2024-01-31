@@ -34,16 +34,4 @@ public class GameManager : MonoBehaviour
         GUILayout.Label("Transport: " + NetworkManager.Singleton.NetworkConfig.NetworkTransport.GetType().Name); // Poka¿e w jaki sposób po³¹czony jest klient i serwer
         GUILayout.Label("Mode: " + mode);
     }
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 }

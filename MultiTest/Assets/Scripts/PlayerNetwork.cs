@@ -5,34 +5,67 @@ using Unity.Netcode;
 
 public class PlayerNetwork : NetworkBehaviour
 {
-    private readonly NetworkVariable<PlayerNetworkData> _netState = new(writePerm: NetworkVariableWritePermission.Owner);
-    private Vector3 _vel;
+    [SerializeField] private bool _serverAuth;
     [SerializeField] private float _cheapInterpolationTime = 0.1f;
+
+    private NetworkVariable<PlayerNetworkState> _playerState;
+    private Rigidbody _rb;
+
+    private void Awake()
+    {
+        _rb = GetComponent<Rigidbody>();
+
+        var permission = _serverAuth ? NetworkVariableWritePermission.Server : NetworkVariableWritePermission.Owner;
+        _playerState = new NetworkVariable<PlayerNetworkState>(writePerm: permission);
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        if (!IsOwner) Destroy(transform.GetComponent<PlayerController>());
+    }
 
     // Update is called once per frame
     void Update()
     {
-        if (IsOwner)
+        if (IsOwner) TransmitState();
+        else ConsumeState();
+    }
+
+    private void TransmitState()
+    {
+        var state = new PlayerNetworkState { Position = _rb.position };
+
+        if (IsServer || !_serverAuth)
         {
-            _netState.Value = new PlayerNetworkData()
-            {
-                Postion = transform.position
-            };
+            _playerState.Value = state;
         }
         else
         {
-            transform.position = Vector3.SmoothDamp(transform.position, _netState.Value.Postion, ref _vel, _cheapInterpolationTime);
+            TransmitStateServerRpc(state);
         }
     }
 
-    struct PlayerNetworkData : INetworkSerializable
+    [ServerRpc]
+    private void TransmitStateServerRpc(PlayerNetworkState state)
+    {
+        _playerState.Value = state;
+    }
+
+    private Vector3 _posVel;
+
+    private void ConsumeState()
+    {
+        _rb.MovePosition(Vector3.SmoothDamp(_rb.position, _playerState.Value.Position, ref _posVel, _cheapInterpolationTime));
+    }
+
+    struct PlayerNetworkState : INetworkSerializable
     {
         private float _x, _z;
 
-        internal Vector3 Postion
+        internal Vector3 Position
         {
             get => new Vector3(_x, 0, _z);
-            set
+            set 
             {
                 _x = value.x;
                 _z = value.z;
